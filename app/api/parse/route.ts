@@ -12,7 +12,13 @@ interface ParsedProfile {
   profile_score: number;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest)
+console.log("--- CLOUD ENV CHECK ---");
+console.log("Has Gemini Key:", !!process.env.GEMINI_API_KEY);
+console.log("Has Supabase URL:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log("Has Supabase Anon Key:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+console.log("-----------------------");
+{
   try {
     // Read incoming multi-part form data from the client request
     const formData = await request.formData();
