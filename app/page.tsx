@@ -1,59 +1,106 @@
-'use client';
+'use client'; // Required for interactivity (hamburger menu state)
 
-import React from 'react';
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 
-export default function Home() {
+// 1. Placeholder AI Images (You will provide these)
+// For now, I am using placeholders that look good.
+const cinematicSlides = [
+  {
+    id: 1,
+    url: '/images/ai-engineering-1.png', // Placeholder URL
+    title: 'Precision Sourcing.',
+    description: 'SP Digital Bridge optimizes complex technical funnels.',
+  },
+  // Add more slide objects here when you have images
+];
+
+export default function MarketingLandingPage() {
+  // 2. State management for the Hamburger menu
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // You can select the first image as a static cinematic backdrop, 
+  // or build a slideshow later. Let's start simple with a static full-screen.
+  const activeSlide = cinematicSlides[0];
+
   return (
-    <div className="min-h-screen bg-[#f6f8fc] text-[#1f1f1f] flex flex-col justify-between antialiased font-sans">
+    <main className="relative h-screen w-full overflow-hidden bg-black text-white">
       
-      {/* HEADER NAV */}
-      <nav className="border-b border-gray-200/60 bg-white sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-[#6366f1] text-white flex items-center justify-center font-black text-[11px] tracking-tight">
-              SP
-            </div>
-            <span className="font-bold text-[16px] tracking-tight text-[#1f1f1f]">
-              Digital Bridge
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a href="/dashboard/parse" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#c2e7ff] text-[#001d35] rounded-full font-semibold text-xs tracking-wide no-underline hover:bg-[#b3ddf7] transition-all shadow-sm">
-              Launch Workspace →
-            </a>
-          </div>
-        </div>
-      </nav>
+      {/* 3. The Full-Screen Cinematic Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-black/60 z-10" /> {/* Dark Overlay for readability */}
+        
+        {/* Placeholder: Change this source when you upload your AI image */}
+        {/* <Image 
+          src="/images/placeholder-cinematic.jpg" // Place your AI image in the /public/images folder
+          alt="Cinematic background"
+          fill
+          priority
+          className="object-cover"
+        /> */}
+        
+        {/* TEMPORARY GRADIENT (Until you add images) */}
+        <div className="w-full h-full bg-gradient-to-br from-gray-900 to-black"/>
+      </div>
 
-      {/* HERO HERO COMPONENT SECTION */}
-      <main className="flex-1 max-w-3xl mx-auto px-6 flex flex-col justify-center items-center text-center py-20 space-y-6">
-        <span className="text-[11px] font-mono font-bold tracking-wider text-[#6366f1] uppercase bg-indigo-50 px-3 py-1 rounded-full">
-          ⚡ Career Automation Engine
-        </span>
-        <h1 className="text-[44px] sm:text-[56px] font-extrabold tracking-tight text-[#1f1f1f] leading-[1.1]">
-          Your placement pipeline,<br />
-          <span className="text-[#6366f1]">on autopilot.</span>
+      {/* 4. Minimalist Header with Hamburger Button */}
+      <header className="relative z-50 flex items-center justify-between p-6 md:p-8">
+        <Link href="/" className="text-3xl font-black tracking-tighter text-sky-400">
+          SP Digital Bridge
+        </Link>
+        
+        {/* The Hamburger Button (The three lines) */}
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="group flex h-10 w-10 flex-col justify-center space-y-1.5 focus:outline-none"
+          aria-label="Toggle Menu"
+        >
+          {/* Animated lines - these automatically change shape based on menuOpen state */}
+          <span className={`block h-0.5 w-8 bg-white transform transition duration-300 ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+          <span className={`block h-0.5 w-8 bg-white transition duration-300 ${menuOpen ? 'opacity-0' : ''}`} />
+          <span className={`block h-0.5 w-8 bg-white transform transition duration-300 ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+        </button>
+      </header>
+
+      {/* 5. Minimalist Cinematic Text (Appearing on top of the image) */}
+      <div className="relative z-10 flex h-full flex-col justify-end p-8 md:p-20 pb-32">
+        <h1 className="text-6xl md:text-8xl font-black tracking-tighter max-w-4xl leading-tight">
+          Smarter Funnels, <br/> Faster Placements.
         </h1>
-        <p className="text-sm sm:text-base text-gray-500 max-w-lg leading-relaxed font-normal">
-          Drop your credentials profile down. Our system parses candidate variables, tracks real market match factors, and automates tracking metrics cleanly.
+        <p className="mt-6 text-xl md:text-2xl text-zinc-300 max-w-2xl font-light">
+          Leverage localized AI to parse resumes, interview candidates, and programmatically apply to engineering roles.
         </p>
-        <div className="pt-4">
-          <a 
-            href="/dashboard/parse" 
-            className="px-8 py-3.5 bg-[#6366f1] text-white font-bold text-xs tracking-wider uppercase rounded-xl shadow-md shadow-indigo-100 hover:bg-[#4f46e5] transition-all no-underline"
-          >
-            Get Started Free
-          </a>
-        </div>
-      </main>
+      </div>
 
-      {/* FOOTER CONTAINER */}
-      <footer className="border-t border-gray-200/60 py-6 text-center bg-white">
-        <p className="text-[11px] font-mono text-gray-400">
-          © 2026 SP Digital Bridge — Enterprise Placement Operations Hub
-        </p>
-      </footer>
+      {/* 6. The Slide-In/Overlay Menu (Revealed only when menuOpen is true) */}
+      <div className={`fixed inset-0 z-40 h-screen w-full bg-black/95 transition-transform duration-500 ease-in-out ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <nav className="flex h-full flex-col items-center justify-center space-y-8 p-10 pt-24 text-center">
+          <h2 className="text-zinc-500 uppercase tracking-widest text-sm pb-6">Platform Ecosystem Features</h2>
+          
+          {/* Feature List (Links to dashboard sections) */}
+          <Link href="/dashboard/parse" onClick={() => setMenuOpen(false)} className="group text-4xl md:text-6xl font-extrabold tracking-tighter hover:text-sky-400 transition">
+            <span className="text-zinc-600 group-hover:text-sky-500 mr-2">01 /</span> Analyze Profile 📥
+          </Link>
+          
+          <Link href="/dashboard/tracker" onClick={() => setMenuOpen(false)} className="group text-4xl md:text-6xl font-extrabold tracking-tighter hover:text-sky-400 transition">
+            <span className="text-zinc-600 group-hover:text-sky-500 mr-2">02 /</span> Pipeline Tracker 📊
+          </Link>
+          
+          <Link href="/dashboard/jobs" onClick={() => setMenuOpen(false)} className="group text-4xl md:text-6xl font-extrabold tracking-tighter hover:text-sky-400 transition">
+            <span className="text-zinc-600 group-hover:text-sky-500 mr-2">03 /</span> Market Funnel Matches ⚡
+          </Link>
 
-    </div>
+          <Link href="/dashboard/refine" onClick={() => setMenuOpen(false)} className="group text-4xl md:text-6xl font-extrabold tracking-tighter hover:text-sky-400 transition">
+            <span className="text-zinc-600 group-hover:text-sky-500 mr-2">04 /</span> Profile Refinement
+          </Link>
+          
+          {/* Closing/Back Text */}
+          <div className="pt-10">
+            <p className="text-zinc-400 text-lg">Click outside or use the top button to return to the cinematic showcase.</p>
+          </div>
+        </nav>
+      </div>
+    </main>
   );
 }
