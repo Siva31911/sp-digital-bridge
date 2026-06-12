@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60;
+
 interface ParsedProfile {
   name: string;
   role: string;
@@ -12,15 +14,16 @@ interface ParsedProfile {
   profile_score: number;
 }
 
-export async function POST(request: NextRequest) { // <-- OPENING BRACKET MOVED HERE
+// Initialize the Gemini AI Client
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+export async function POST(request: NextRequest) {
   console.log("--- CLOUD ENV CHECK ---");
   console.log("Has Gemini Key:", !!process.env.GEMINI_API_KEY);
   console.log("Has Supabase URL:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("Has Supabase Anon Key:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   console.log("-----------------------");
 
   try {
-    // Read incoming multi-part form data from the client request
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
 
@@ -28,23 +31,45 @@ export async function POST(request: NextRequest) { // <-- OPENING BRACKET MOVED 
       return NextResponse.json({ error: 'No profile data block received' }, { status: 400 });
     }
 
-    const filename = file.name;
-    const cleanName = filename.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ');
+    // 1. Convert the uploaded file into a Base64 string so Gemini can read it
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64Data = buffer.toString('base64');
 
-    // Simulated network processing latency lag
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 2. Instruct Gemini exactly how to read and output the data
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const promptText = `
+      You are an expert technical recruiter AI. Analyze this resume document and extract the candidate's information.
+      Return ONLY a raw JSON object with no markdown formatting, no backticks, and no extra text. 
+      Use this exact JSON structure:
+      {
+        "name": "Candidate Full Name",
+        "role": "Current or primary job title",
+        "experience_years": Total years of experience as a simple integer number,
+        "skills": ["Java", "Selenium", "Playwright", "..."],
+        "email": "candidate@email.com",
+        "summary": "Write a powerful 2-sentence professional summary based on their experience.",
+        "profile_score": Calculate a score from 1 to 100 based on the quality and technical depth of this resume.
+      }
+    `;
 
-    const systemPayload = {
-      name: cleanName || "Sivaprakash S",
-      role: "Senior Automation Test Engineer",
-      experience_years: 5,
-      skills: ["Java", "Selenium", "Playwright", "Cypress", "SQL", "Git", "API Testing", "CI/CD"],
-      email: "developer.siva@gmail.com",
-      summary: "Senior QA professional specializing in establishing high-reliability automation testing frameworks and continuous test cycles.",
-      profile_score: 92
-    };
+    // 3. Send the document and instructions to Gemini
+    const result = await model.generateContent([
+      promptText,
+      {
+        inlineData: {
+          data: base64Data,
+          mimeType: file.type || 'application/pdf', 
+        },
+      },
+    ]);
 
-    // Push the compiled data parameters safely into your cloud database table
+    // 4. Clean and parse the AI's response
+    const responseText = result.response.text();
+    const cleanedText = responseText.replace(/```json\n?|```/g, '').trim();
+    const systemPayload: ParsedProfile = JSON.parse(cleanedText);
+
+    // 5. Push the real AI-extracted data into Supabase
     const { data, error } = await supabase
       .from('profiles')
       .insert([systemPayload])
@@ -57,6 +82,7 @@ export async function POST(request: NextRequest) { // <-- OPENING BRACKET MOVED 
     }
 
     return NextResponse.json(data);
+    
   } catch (error: any) {
     console.error('Fatal Unhandled Server Route Exception:', error);
     return NextResponse.json({ error: 'Internal pipeline processing failure', details: error.message }, { status: 500 });
